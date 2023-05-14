@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+import uuid
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, name, password=None, **extra_fields):
@@ -17,11 +18,13 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, name, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
+   id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
    name = models.CharField(max_length=100)
    email = models.EmailField(max_length=254, unique=True)
    password = models.CharField(max_length=128)
    role = models.CharField(max_length=100)
    projects = models.ManyToManyField('Project', related_name='users', blank=True)
+   is_staff = models.BooleanField(default=False)
    
    objects = CustomUserManager()
 
@@ -35,6 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
        return f'{self.name}, {self.role} - {self.email}'
 
 class Project(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='managed_projects')
     project_name = models.CharField(max_length=100)
     description = models.TextField()

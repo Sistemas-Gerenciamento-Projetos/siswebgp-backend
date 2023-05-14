@@ -7,16 +7,15 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'email', 'role', 'projects')
         read_only_fields = ('is_active', 'created', 'updated')
         
+class TaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ('id', 'project', 'title', 'description', 'creation_date', 'deadline_date', 'status', 'user', 'epic')
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ('id', 'manager', 'project_name', 'description', 'creation_date', 'deadline_date', 'users')
-
-class TaskSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Task
-        fields = ('id', 'title', 'description', 'creation_date', 'deadline_date', 'status', 'user', 'project', 'epic')
 
 class EpicSerializer(serializers.ModelSerializer):
     class Meta:
