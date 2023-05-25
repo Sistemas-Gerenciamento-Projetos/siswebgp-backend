@@ -104,6 +104,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
             user = request.user
             projects = Project.objects.filter(users__id=user.id)
             serializer = ProjectSerializer(projects, many=True)
+
+            for project in serializer.data:
+                project['manager_name'] = User.objects.get(pk=project['manager']).name
+
             return JsonResponse(serializer.data, safe=False)
         except user is None:
             return JsonResponse({'message': 'Usuário não encontrado.'}, status=404)
@@ -170,3 +174,8 @@ class TaskViewSet(viewsets.ModelViewSet):
     #     obj = Task.objects.get(lookup_field_value)
     #     self.check_object_permissions(self.request, obj)
     #     return obj
+
+class InviteViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'post']
+    serializer_class = InviteSerializer
+    permission_classes = [IsAuthenticated]
