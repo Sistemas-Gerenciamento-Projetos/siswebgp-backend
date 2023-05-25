@@ -123,7 +123,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return self.queryset
     
 class TaskViewSet(viewsets.ModelViewSet):
-    http_method_names = ['get', 'post', 'put', 'delete']
+    http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
@@ -141,6 +141,29 @@ class TaskViewSet(viewsets.ModelViewSet):
         else:
             serializer = TaskSerializer(queryset, many=True)
             return JsonResponse(serializer.data, safe=False)
+
+    def retrieve(self, request, project__pk=None, pk=None):
+        queryset = Task.objects.filter(project=project__pk)
+        if not queryset.exists():
+            return JsonResponse({'message': 'Não foi possível recuperar tarefa pois não há tarefas cadastradas.'})
+        task = get_object_or_404(queryset, pk=pk)
+        serializer = TaskSerializer(task)
+        return JsonResponse(serializer.data)
+    
+    def partial_update(self, request, project__pk=None, *args, **kwargs):
+        kwargs['partial'] = True
+        project = Project.objects.get(pk=project__pk)
+        project_tasks = Task.objects.filter(project=project__pk)
+
+        task = project_tasks.get(pk=kwargs['pk'])
+
+        if request.data.get("status") is not None and (request.user.id != project.manager.id and request.user.id != task.user.id):
+            return JsonResponse({'message': 'Você não tem permissão para alterar o status desta tarefa.'}, status=403)
+
+        serializer = self.get_serializer(task, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return JsonResponse(serializer.data)
 
     # def get_object(self):
     #     lookup_field_value = self.kwargs[self.lookup_field]
