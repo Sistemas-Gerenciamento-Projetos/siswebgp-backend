@@ -76,7 +76,8 @@ class Epic(models.Model):
 
 class Invite(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    user_invited = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='invites_received')
+    # user_invited = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='invites_received')
+    invited_user = models.EmailField(max_length=254, null=False)
     inviter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='invites')
     creation_date = models.DateTimeField(auto_now_add=True)
     expiration_date = models.DateTimeField(null=True, blank=True)
