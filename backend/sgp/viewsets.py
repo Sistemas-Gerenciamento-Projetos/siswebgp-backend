@@ -5,6 +5,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+import logging
+logger = logging.getLogger('sgp_api')
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     http_method_names = ['get']
@@ -51,7 +53,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         return super().get_object()
 
 class ProjectViewSet(viewsets.ModelViewSet):
-    http_method_names = ['get', 'post', 'put', 'delete']
+    http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
     queryset = Project.objects.all()
@@ -60,37 +62,65 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             self.permission_classes = [IsAdminUser]
         return super(self.__class__, self).get_permissions()
+    
+    # Para fazer com que o body da requisição precise passar o id do gerente novamente,
+    # é só deletar essa função.
+    def create(self, request):
+        data = request.data
+        # Ou melhor, deletar essa linha.
+        data['manager'] = request.user.id
+        data['users'].append(request.user.id)
+        serializer = ProjectSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201)
+        else:
+            return JsonResponse(serializer.errors, status=400)
 
     @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated])
-    def create_task(self, request, pk=None):
-        project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
-        serializer = TaskSerializer(data=request.data)
+    def create_new_task(self, request, pk=None):
+        project = Project.objects.get(pk=self.kwargs['pk'])
+
+        if request.user.id != project.manager.id:
+            return JsonResponse({'message': 'Você não tem permissão para criar tarefas neste projeto.'}, status=403)
+        if request.data['user'] not in project.users.all():
+            return JsonResponse({'message': 'O usuário informado não está associado a este projeto.'}, status=400)
+
+        data = request.data
+        data['project'] = self.kwargs['pk']
+
+        logger.info(data)
+
+        serializer = TaskSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(project=project)
+            serializer.save()
             return JsonResponse(serializer.data, status=201)
         else:
             return JsonResponse(serializer.errors, status=400)
         
-    def update(self, request, pk=None):
-        project = get_object_or_404(Project, pk=pk)
-        serializer = ProjectSerializer(project, data=request.data, partial=True)
-        if serializer.is_valid() and UserViewSet.get_object(self).id == project.manager.id:
-            serializer.save()
-            return JsonResponse(serializer.data)
-        else:
-            return JsonResponse(serializer.errors, status=400)
-
+    @action(detail=False, methods=['GET'], permission_classes=[IsAuthenticated])
+    def projects_by_user(self, request):
+        try:
+            user = request.user
+            projects = Project.objects.filter(users__id=user.id)
+            serializer = ProjectSerializer(projects, many=True)
+            return JsonResponse(serializer.data, safe=False)
+        except user is None:
+            return JsonResponse({'message': 'Usuário não encontrado.'}, status=404)
+    
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        project = self.get_object()
+        logger.info(f'Project name: {project.project_name}, project description: {project.description}')
+        if request.user.id != project.manager.id:
+            return JsonResponse({'message': 'Você não tem permissão para editar este projeto.'}, status=403)
+        return super().partial_update(request, *args, **kwargs)
+    
     def get_queryset(self):
         if not self.queryset.exists():
             return JsonResponse({'message': 'Não há projetos cadastrados.'})
         else:
             return self.queryset
-
-    def get_object(self):
-        lookup_field_value = self.kwargs[self.lookup_field]
-        obj = Project.objects.get(lookup_field_value)
-        self.check_object_permissions(self.request, obj)
-        return obj
     
 class TaskViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'put', 'delete']
@@ -103,9 +133,17 @@ class TaskViewSet(viewsets.ModelViewSet):
             return self.queryset
         else:
             return JsonResponse({'message': 'Não há tarefas cadastradas.'})
+        
+    def list(self, request, project__pk=None):
+        queryset = Task.objects.filter(project=project__pk)
+        if not queryset.exists(): 
+            return JsonResponse({'message': 'Não foi possível recuperar tarefas pois não há tarefas cadastradas.'})
+        else:
+            serializer = TaskSerializer(queryset, many=True)
+            return JsonResponse(serializer.data, safe=False)
 
-    def get_object(self):
-        lookup_field_value = self.kwargs[self.lookup_field]
-        obj = Task.objects.get(lookup_field_value)
-        self.check_object_permissions(self.request, obj)
-        return obj
+    # def get_object(self):
+    #     lookup_field_value = self.kwargs[self.lookup_field]
+    #     obj = Task.objects.get(lookup_field_value)
+    #     self.check_object_permissions(self.request, obj)
+    #     return obj

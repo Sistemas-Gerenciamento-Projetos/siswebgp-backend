@@ -44,6 +44,22 @@ INSTALLED_APPS = [
     'rest_framework',
 ]
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': { # Log to console
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'sgp_api': { # Logger for sgp_api app
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
