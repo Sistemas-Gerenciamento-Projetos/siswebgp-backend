@@ -8,12 +8,13 @@ routes.register(r'auth/login', LoginViewSet, basename='auth-login')
 routes.register(r'auth/register', RegistrationViewSet, basename='auth-register')
 routes.register(r'auth/refresh', RefreshViewSet, basename='auth-refresh')
 routes.register(r'users', UserViewSet, basename='users')
-routes.register(r'projects', ProjectViewSet, basename='projects')
+routes.register(r'projects', ProjectViewSet, basename='project')
 
 project_routes = NestedSimpleRouter(routes, r'projects', lookup='project')
 project_routes.register(r'tasks', TaskViewSet, basename='project-tasks')
 
+routes.registry.extend(project_routes.registry)
+
 urlpatterns = [
     path("", include(routes.urls)),
-    path("", include(project_routes.urls)),
 ]
