@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
+
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     http_method_names = ['get']
     serializer_class = UserSerializer
@@ -15,7 +16,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         if not self.queryset.exists():
             return JsonResponse({'message': 'Não há usuários cadastrados.'})
-        
+
         else:
             return self.queryset
 
@@ -24,6 +25,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         obj = User.objects.get(lookup_field_value)
         self.check_object_permissions(self.request, obj)
         return obj
+
 
 class ProjectViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'put', 'delete']
@@ -52,7 +54,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         obj = Project.objects.get(lookup_field_value)
         self.check_object_permissions(self.request, obj)
         return obj
-    
+
+
 class TaskViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'put', 'delete']
     serializer_class = TaskSerializer
