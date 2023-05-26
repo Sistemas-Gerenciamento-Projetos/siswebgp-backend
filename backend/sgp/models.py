@@ -54,6 +54,7 @@ class Task(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
     creation_date = models.DateTimeField(auto_now_add=True)
+    start_date = models.DateTimeField(null=False, blank=False)
     deadline_date = models.DateTimeField(null=False)
     status = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)

@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from datetime import datetime
 import logging
 logger = logging.getLogger('sgp_api')
 
@@ -69,7 +70,18 @@ class ProjectViewSet(viewsets.ModelViewSet):
         data = request.data
         # Ou melhor, deletar essa linha.
         data['manager'] = request.user.id
-        data['users'].append(request.user.id)
+
+        if data.get('users') is not None:
+            data['users'].append(request.user.id)
+        else:
+            data['users'] = [request.user.id]
+
+        start_date = datetime.fromisoformat(data['start_date'])
+        deadline_date = datetime.fromisoformat(data['deadline_date'])
+
+        if deadline_date < start_date:
+            return JsonResponse({'message': 'A data de término não pode ser anterior à data de início.'}, status=400)
+
         serializer = ProjectSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -89,8 +101,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         data = request.data
         data['project'] = self.kwargs['pk']
 
-        logger.info(data)
-
         serializer = TaskSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -107,6 +117,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
             for project in serializer.data:
                 project['manager_name'] = User.objects.get(pk=project['manager']).name
+                project['num_completed_tasks'] = Task.objects.filter(project=project['id'], status='DONE').count()
+                project['num_total_tasks'] = Task.objects.filter(project=project['id']).count()
 
             return JsonResponse(serializer.data, safe=False)
         except user is None:
@@ -115,10 +127,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         kwargs['partial'] = True
         project = self.get_object()
-        logger.info(f'Project name: {project.project_name}, project description: {project.description}')
         if request.user.id != project.manager.id:
             return JsonResponse({'message': 'Você não tem permissão para editar este projeto.'}, status=403)
         return super().partial_update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        project = self.get_object()
+        if request.user.id != project.manager.id:
+            return JsonResponse({'message': 'Você não tem permissão para deletar este projeto.'}, status=403)
+        return super().destroy(request, *args, **kwargs)
     
     def get_queryset(self):
         if not self.queryset.exists():
@@ -168,12 +185,6 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return JsonResponse(serializer.data)
-
-    # def get_object(self):
-    #     lookup_field_value = self.kwargs[self.lookup_field]
-    #     obj = Task.objects.get(lookup_field_value)
-    #     self.check_object_permissions(self.request, obj)
-    #     return obj
 
 class InviteViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post']
