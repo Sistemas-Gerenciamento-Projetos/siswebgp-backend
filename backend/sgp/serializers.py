@@ -15,7 +15,7 @@ class TaskSerializer(serializers.ModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ('id', 'manager', 'project_name', 'description', 'creation_date', 'deadline_date', 'users')
+        fields = '__all__'
 
 class EpicSerializer(serializers.ModelSerializer):
     class Meta:
