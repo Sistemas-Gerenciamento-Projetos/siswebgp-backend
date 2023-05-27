@@ -61,7 +61,7 @@ class Task(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
     creation_date = models.DateTimeField(auto_now_add=True)
-    start_date = models.DateTimeField(null=False, blank=False)
+    start_date = models.DateTimeField(null=True, blank=False)
     deadline_date = models.DateTimeField(null=False)
     status = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
@@ -89,7 +89,7 @@ class Epic(models.Model):
 class Invite(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     # user_invited = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='invites_received')
-    invited_user = models.EmailField(max_length=254, null=False)
+    invited_user = models.EmailField(max_length=254, null=True)
     inviter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='invites')
 
     creation_date = models.DateTimeField(auto_now_add=True)
