@@ -9,7 +9,6 @@ from datetime import datetime
 import logging
 logger = logging.getLogger('sgp_api')
 
-
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     http_method_names = ['get']
     serializer_class = UserSerializer
@@ -32,7 +31,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         if not self.queryset.exists():
             return JsonResponse({'message': 'Não há usuários cadastrados.'})
-
+        
         else:
             return self.queryset
 
@@ -53,7 +52,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             return self.request.user
         
         return super().get_object()
-
 
 class ProjectViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
@@ -144,7 +142,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return JsonResponse({'message': 'Não há projetos cadastrados.'})
         else:
             return self.queryset
-
+    
 class TaskViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = TaskSerializer
@@ -192,4 +190,3 @@ class InviteViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post']
     serializer_class = InviteSerializer
     permission_classes = [IsAuthenticated]
-
