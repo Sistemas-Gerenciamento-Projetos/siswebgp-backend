@@ -92,13 +92,19 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated])
     def create_new_task(self, request, pk=None):
         project = Project.objects.get(pk=self.kwargs['pk'])
+        data = request.data
 
         if request.user.id != project.manager.id:
             return JsonResponse({'message': 'Você não tem permissão para criar tarefas neste projeto.'}, status=403)
-        if request.data['user'] not in project.users.all():
+        if User.objects.get(pk=data['user']) not in project.users.all():
             return JsonResponse({'message': 'O usuário informado não está associado a este projeto.'}, status=400)
 
-        data = request.data
+        start_date = datetime.fromisoformat(data['start_date'])
+        deadline_date = datetime.fromisoformat(data['deadline_date'])
+
+        if deadline_date < start_date:
+            return JsonResponse({'message': 'A data de término não pode ser anterior à data de início.'}, status=400)
+
         data['project'] = self.kwargs['pk']
 
         serializer = TaskSerializer(data=data)
