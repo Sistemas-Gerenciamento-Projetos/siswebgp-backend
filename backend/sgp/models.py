@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 import uuid
 
@@ -43,7 +44,8 @@ class Project(models.Model):
     project_name = models.CharField(max_length=100)
     description = models.TextField()
     creation_date = models.DateTimeField(auto_now_add=True)
-    deadline_date = models.DateTimeField(null=True, blank=True)
+    start_date = models.DateTimeField(null=False, blank=False, default=timezone.now)
+    deadline_date = models.DateTimeField(null=False, blank=False)
     
     def _str_(self):
          return f'{self.project_name} - {self.description}'
@@ -52,7 +54,8 @@ class Task(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
     creation_date = models.DateTimeField(auto_now_add=True)
-    deadline_date = models.DateTimeField(null=True, blank=True)
+    start_date = models.DateTimeField(null=False, blank=False)
+    deadline_date = models.DateTimeField(null=False)
     status = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
@@ -74,7 +77,8 @@ class Epic(models.Model):
 
 class Invite(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    user_invited = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='invites_received')
+    # user_invited = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='invites_received')
+    invited_user = models.EmailField(max_length=254, null=False)
     inviter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='invites')
     creation_date = models.DateTimeField(auto_now_add=True)
     expiration_date = models.DateTimeField(null=True, blank=True)

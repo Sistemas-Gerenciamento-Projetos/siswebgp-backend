@@ -10,12 +10,12 @@ class UserSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = ('id', 'project', 'title', 'description', 'creation_date', 'deadline_date', 'status', 'user', 'epic')
+        fields = ('id', 'project', 'title', 'description', 'creation_date', 'start_date', 'deadline_date', 'status', 'user', 'epic')
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ('id', 'manager', 'project_name', 'description', 'creation_date', 'deadline_date', 'users')
+        fields = ('id', 'manager', 'project_name', 'description', 'creation_date', 'start_date', 'deadline_date', 'users')
 
 class EpicSerializer(serializers.ModelSerializer):
     class Meta:
