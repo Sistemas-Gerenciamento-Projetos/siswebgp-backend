@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from datetime import datetime
+from django.db.models.query_utils import Q
 import logging
 logger = logging.getLogger('sgp_api')
 
@@ -167,6 +168,8 @@ class TaskViewSet(viewsets.ModelViewSet):
             return JsonResponse({'message': 'Não foi possível recuperar tarefas pois não há tarefas cadastradas.'})
         else:
             serializer = TaskSerializer(queryset, many=True)
+            for task in serializer.data:
+                task['user_name'] = User.objects.get(pk=task['user']).name
             return JsonResponse(serializer.data, safe=False)
 
     def retrieve(self, request, project__pk=None, pk=None):
@@ -175,7 +178,13 @@ class TaskViewSet(viewsets.ModelViewSet):
             return JsonResponse({'message': 'Não foi possível recuperar tarefa pois não há tarefas cadastradas.'})
         task = get_object_or_404(queryset, pk=pk)
         serializer = TaskSerializer(task)
-        return JsonResponse(serializer.data)
+
+        if serializer.data.get('user_name') is None:
+            serializer_data = serializer.data
+            serializer_data.update({'user_name': User.objects.get(pk=serializer.data['user']).name})
+            return JsonResponse(serializer_data)
+        else:
+            return JsonResponse(serializer.data)
     
     def partial_update(self, request, project__pk=None, *args, **kwargs):
         kwargs['partial'] = True
