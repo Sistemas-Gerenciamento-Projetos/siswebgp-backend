@@ -147,7 +147,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 if User.objects.get(pk=user_id) not in project.users.all():
                     project.users.add(user_id)
                 else:
-                    return JsonResponse({'message': 'O usuário informado já está associado a este projeto.'}, status=400)
+                    return JsonResponse({'message': f'O usuário {User.objects.get(pk=user_id).email} já está associado a este projeto.'}, status=400)
                 
             return JsonResponse({'message': 'Usuários adicionados com sucesso.'}, status=200)
         
