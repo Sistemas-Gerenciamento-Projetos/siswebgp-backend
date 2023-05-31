@@ -131,6 +131,29 @@ class ProjectViewSet(viewsets.ModelViewSet):
         except user is None:
             return JsonResponse({'message': 'Usuário não encontrado.'}, status=404)
     
+    @action(detail=True, methods=['GET', 'POST'], permission_classes=[IsAuthenticated])
+    def include_users(self, request, pk=None):
+        if request.method == 'GET':
+            project = Project.objects.get(pk=self.kwargs['pk'])
+            users_not_in_project = User.objects.difference(project.users.all())
+            serializer = UserSerializer(users_not_in_project, many=True)
+            return JsonResponse(serializer.data, safe=False)
+
+        elif request.method == 'POST':
+            project = Project.objects.get(pk=self.kwargs['pk'])
+            data = request.data
+
+            for user_id in data['users']:
+                if User.objects.get(pk=user_id) not in project.users.all():
+                    project.users.add(user_id)
+                else:
+                    return JsonResponse({'message': f'O usuário {User.objects.get(pk=user_id).email} já está associado a este projeto.'}, status=400)
+                
+            return JsonResponse({'message': 'Usuários adicionados com sucesso.'}, status=200)
+        
+        else:
+            return JsonResponse({'message': 'Método não permitido.'}, status=405)
+
     def partial_update(self, request, *args, **kwargs):
         kwargs['partial'] = True
         project = self.get_object()
