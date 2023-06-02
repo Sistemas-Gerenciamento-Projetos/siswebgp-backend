@@ -1,21 +1,32 @@
 #!/bin/bash
 
-# Checa se o Python3 está instalado
-if ! command -v python3 &> /dev/null; then
-    echo "Python 3 não está instalado. Por favor instale o Python 3 e tente novamente."
+pythonPath=$(command -v python)
+if [[ -z $pythonPath ]]; then
+    echo "Python 3 não está instalado. Por favor, instale Python 3 e tente novamente."
     exit 1
 fi
 
-# Cria o venv e ativa
-python3 -m venv myenv
-source myenv/bin/activate
+cd ..
 
-# Instala as dependências
+echo "Python 3 está instalado. Instalando virtual environment..."
+python -m venv sgp-backend
+mv backend sgp-backend
+source sgp-backend/bin/activate
+
+echo "Instalando dependencias..."
 pip install -r requirements.txt
 
-# Executa as migrações e coleta os arquivos estáticos
-python manage.py migrate
-python manage.py collectstatic
+echo "Configurando base de dados..."
+files=$(find sgp-backend/backend/sgp/migrations -type f)
 
-# Inicia o servidor local
-python manage.py runserver
+for file in $files; do
+    if [[ $(basename "$file") != "__init__.py" ]]; then
+        rm -f "$file"
+    fi
+done
+
+python sgp-backend/backend/manage.py makemigrations
+python sgp-backend/backend/manage.py migrate
+
+echo "Iniciando servidor local..."
+python sgp-backend/backend/manage.py runserver
