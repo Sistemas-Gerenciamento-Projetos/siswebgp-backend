@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pythonPath=$(command -v python)
+pythonPath=$(command -v python3)
 if [[ -z $pythonPath ]]; then
     echo "Python 3 não está instalado. Por favor, instale Python 3 e tente novamente."
     exit 1
@@ -9,7 +9,8 @@ fi
 cd ..
 
 echo "Python 3 está instalado. Instalando virtual environment..."
-python -m venv sgp-backend
+sudo apt install python3.10-venv
+python3 -m venv sgp-backend
 mv backend sgp-backend
 source sgp-backend/bin/activate
 
@@ -25,8 +26,8 @@ for file in $files; do
     fi
 done
 
-python sgp-backend/backend/manage.py makemigrations
-python sgp-backend/backend/manage.py migrate
+python3 sgp-backend/backend/manage.py makemigrations
+python3 sgp-backend/backend/manage.py migrate
 
 echo "Iniciando servidor local..."
-python sgp-backend/backend/manage.py runserver
+python3 sgp-backend/backend/manage.py runserver
