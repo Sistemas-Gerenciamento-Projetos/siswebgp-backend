@@ -16,11 +16,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = User.objects.order_by('name')
 
-    def get_permissions(self):
-        if self.action == 'list':
-            self.permission_classes = [IsAdminUser]
-        return super(self.__class__, self).get_permissions()
-
     def list(self, request):
         queryset = self.get_queryset()
         if queryset == JsonResponse({'message': 'Não há usuários cadastrados.'}):
