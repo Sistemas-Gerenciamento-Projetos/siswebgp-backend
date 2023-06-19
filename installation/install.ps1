@@ -1,4 +1,4 @@
-$pythonPath = Get-Command python -ErrorAction SilentlyContinue
+$pythonPath = Get-Command python3 -ErrorAction SilentlyContinue
 if ($pythonPath -eq $null) {
     Write-Host "Python 3 não está instalado. Por favor, instale Python 3 e tente novamente."
     Exit 1
@@ -7,7 +7,7 @@ if ($pythonPath -eq $null) {
 cd ..
 
 Write-Host "Python 3 está instalado. Instalando virtual environment..."
-python -m venv sgp-backend
+python3 -m venv sgp-backend
 Move-Item -Path .\backend -Destination .\sgp-backend
 .\sgp-backend\Scripts\Activate.ps1
 
@@ -22,8 +22,8 @@ foreach ($file in $files) {
         Remove-Item -Path $file.FullName -Force
     }
 }
-python .\sgp-backend\backend\manage.py makemigrations
-python .\sgp-backend\backend\manage.py migrate
+python3 .\sgp-backend\backend\manage.py makemigrations
+python3 .\sgp-backend\backend\manage.py migrate
 
 Write-Host "Iniciando servidor local..."
-python .\sgp-backend\backend\manage.py runserver
+python3 .\sgp-backend\backend\manage.py runserver
