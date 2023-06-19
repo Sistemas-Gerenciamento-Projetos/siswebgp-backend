@@ -137,8 +137,24 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 del user['email']
                 del user['role']
             return JsonResponse(serializer.data, safe=False)
-        except project.DoesNotExist:
+        except Project.DoesNotExist:
             return JsonResponse({'message': 'Projeto não encontrado.'}, status=404)
+
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    def external_users(self, request, pk=None):
+        try:
+            project = Project.objects.get(pk=self.kwargs['pk'])
+
+            if project is None:
+                return JsonResponse({'message': 'Projeto não encontrado.'}, status=404)
+            if request.user not in project.users.all():
+                return JsonResponse({'message': 'Você não tem permissão para acessar este projeto.'}, status=403)
+            
+            users_not_in_project = User.objects.difference(project.users.all())
+            serializer = UserSerializer(users_not_in_project, many=True)
+            return JsonResponse(serializer.data, safe=False)
+        except Project.DoesNotExist:
+            return JsonResponse({'message': f'Projeto com id {self.kwargs["pk"]} não encontrado.'}, status=404)
         
     
     @action(detail=True, methods=['GET', 'POST'], permission_classes=[IsAuthenticated])
