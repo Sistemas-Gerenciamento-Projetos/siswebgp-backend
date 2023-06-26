@@ -15,6 +15,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
     queryset = User.objects.order_by('name')
+ if request.data.get("status") is not None and (request.user.id != project.manager.id and request.user.id != task.user.id):
+            return JsonResponse({'message': 'Você não tem permissão para alterar o status desta tarefa.'}, status=403)
 
     def list(self, request):
         queryset = self.get_queryset()
@@ -227,8 +229,8 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         if request.data.get('project') is not None:
             return JsonResponse({'message': 'Você não pode alterar o projeto desta tarefa.'}, status=403)
-        if request.data.get("status") is not None and (request.user.id != project.manager.id and request.user.id != task.user.id):
-            return JsonResponse({'message': 'Você não tem permissão para alterar o status desta tarefa.'}, status=403)
+        # if request.data.get("status") is not None and (request.user.id != project.manager.id and request.user.id != task.user.id):
+        #     return JsonResponse({'message': 'Você não tem permissão para alterar o status desta tarefa.'}, status=403)
 
         serializer = self.get_serializer(task, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
