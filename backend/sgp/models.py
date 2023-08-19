@@ -68,6 +68,7 @@ class Task(models.Model):
 class Epic(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
+    number = models.IntegerField()
     creation_date = models.DateTimeField(auto_now_add=True)
     deadline_date = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=100)
