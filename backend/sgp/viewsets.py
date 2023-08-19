@@ -102,6 +102,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return JsonResponse({'message': 'A data de término não pode ser anterior à data de início.'}, status=400)
 
         data['project'] = self.kwargs['pk']
+        project_tasks = Task.objects.filter(project=data['project'])
+        if project_tasks is not None:
+            greatest_number = project_tasks.order_by("-number")[0].number
+            data['number'] = greatest_number + 1
+        else:
+            data['number'] = 0
 
         serializer = TaskSerializer(data=data)
         if serializer.is_valid():

@@ -57,6 +57,7 @@ class Task(models.Model):
     start_date = models.DateTimeField(null=False, blank=False)
     deadline_date = models.DateTimeField(null=False)
     status = models.CharField(max_length=100)
+    number = models.IntegerField()
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
     epic = models.ForeignKey('Epic', on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks')
