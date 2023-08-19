@@ -103,11 +103,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         data['project'] = self.kwargs['pk']
         project_tasks = Task.objects.filter(project=data['project'])
-        if project_tasks is not None:
+        if not project_tasks:
+            data['number'] = 0
+        else:
             greatest_number = project_tasks.order_by("-number")[0].number
             data['number'] = greatest_number + 1
-        else:
-            data['number'] = 0
 
         serializer = TaskSerializer(data=data)
         if serializer.is_valid():
