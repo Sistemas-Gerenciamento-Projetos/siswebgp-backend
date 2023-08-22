@@ -272,3 +272,39 @@ class InviteViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post']
     serializer_class = InviteSerializer
     permission_classes = [IsAuthenticated]
+
+class EpicViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'post']
+    serializer_class = EpicSerializer
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, project__pk=None):
+        project__pk = request.GET.get('project_id', None)
+        if project__pk is None:
+            return JsonResponse({'message': 'Campo project_id inválido'}, status=400)
+
+        queryset = Epic.objects.filter(project=project__pk)
+
+        if not queryset.exists():
+            return JsonResponse([], status=200, safe=False)
+        
+        serializer = EpicSerializer(queryset, many=True)
+        return JsonResponse(serializer.data)
+
+    def create(self, request):
+        data = request.data
+
+        project_id = request.data.get('project_id')
+        project_epics = Epic.objects.filter(project=project_id)
+        if not project_epics:
+            data['number'] = 0
+        else:
+            greatest_number = project_epics.order_by("-number")[0].number
+            data['number'] = greatest_number + 1
+
+        serializer = EpicSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201)
+        else:
+            return JsonResponse(serializer.errors, status=400)
