@@ -73,6 +73,7 @@ class Epic(models.Model):
     deadline_date = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=100)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     
     def _str_(self):
          return f'{self.title}'
