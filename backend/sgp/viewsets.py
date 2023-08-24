@@ -295,11 +295,11 @@ class EpicViewSet(viewsets.ModelViewSet):
 
         return JsonResponse(serializer.data, safe=False)
 
-    def create(self, request):
+    def create(self, request, project__pk=None):
         data = request.data
 
-        project_id = request.data.get('project_id')
-        project_epics = Epic.objects.filter(project=project_id)
+        project_epics = Epic.objects.filter(project=project__pk)
+
         if not project_epics:
             data['number'] = 0
         else:
