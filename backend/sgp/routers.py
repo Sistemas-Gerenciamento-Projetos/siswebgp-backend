@@ -9,11 +9,12 @@ routes.register(r'auth/register', RegistrationViewSet, basename='auth-register')
 routes.register(r'auth/refresh', RefreshViewSet, basename='auth-refresh')
 routes.register(r'users', UserViewSet, basename='users')
 routes.register(r'projects', ProjectViewSet, basename='project')
-routes.register(r'epics', EpicViewSet, basename='epic')
 
 project_routes = NestedSimpleRouter(routes, r'projects', lookup='project')
 project_routes.register(r'tasks', TaskViewSet, basename='project-tasks')
 project_routes.register(r'invites', InviteViewSet, basename='project-invites')
+project_routes.register(r'epics', EpicViewSet, basename='project-epics')
+
 
 routes.registry.extend(project_routes.registry)
 

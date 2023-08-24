@@ -274,7 +274,7 @@ class InviteViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 class EpicViewSet(viewsets.ModelViewSet):
-    http_method_names = ['get', 'post']
+    http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = EpicSerializer
     permission_classes = [IsAuthenticated]
 
@@ -312,3 +312,15 @@ class EpicViewSet(viewsets.ModelViewSet):
             return JsonResponse(serializer.data, status=201)
         else:
             return JsonResponse(serializer.errors, status=400)
+
+    def partial_update(self, request, project__pk=None, *args, **kwargs):
+        kwargs['partial'] = True
+        project = Project.objects.get(pk=project__pk)
+        project_epics = Epic.objects.filter(project=project__pk)
+        epic = project_epics.get(pk=kwargs['pk'])
+
+        serializer = self.get_serializer(epic, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return JsonResponse(serializer.data)
