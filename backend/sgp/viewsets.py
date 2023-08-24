@@ -279,7 +279,6 @@ class EpicViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request, project__pk=None):
-        project__pk = request.GET.get('project_id', None)
         if project__pk is None:
             return JsonResponse({'message': 'Campo project_id inválido'}, status=400)
 
