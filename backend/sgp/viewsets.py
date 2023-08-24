@@ -289,7 +289,11 @@ class EpicViewSet(viewsets.ModelViewSet):
             return JsonResponse([], status=200, safe=False)
         
         serializer = EpicSerializer(queryset, many=True)
-        return JsonResponse(serializer.data)
+
+        for epic in serializer.data:
+                epic['user_name'] = User.objects.get(pk=epic['user']).name
+
+        return JsonResponse(serializer.data, safe=False)
 
     def create(self, request):
         data = request.data
