@@ -225,6 +225,7 @@ class TaskViewSet(viewsets.ModelViewSet):
             serializer = TaskSerializer(queryset, many=True)
             for task in serializer.data:
                 task['user_name'] = User.objects.get(pk=task['user']).name
+                task['epic'] = 0
             return JsonResponse(serializer.data, safe=False)
 
     def retrieve(self, request, project__pk=None, pk=None):
@@ -291,6 +292,7 @@ class EpicViewSet(viewsets.ModelViewSet):
 
         for epic in serializer.data:
                 epic['user_name'] = User.objects.get(pk=epic['user']).name
+                epic['epic'] = 1
 
         return JsonResponse(serializer.data, safe=False)
 
