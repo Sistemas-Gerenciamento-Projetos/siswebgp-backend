@@ -325,3 +325,14 @@ class EpicViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
 
         return JsonResponse(serializer.data)
+
+    def destroy(self, request, project__pk=None, *args, **kwargs):
+        project = Project.objects.get(pk=project__pk)
+        project_epics = Epic.objects.filter(project=project__pk)
+
+        epic = project_epics.get(pk=kwargs['pk'])
+        if request.user.id != project.manager.id:
+            return JsonResponse({'message': 'Você não tem permissão para deletar este épico.'}, status=403)
+
+        self.perform_destroy(epic)
+        return JsonResponse({'message': 'Épico deletado com sucesso.'}, status=200)
