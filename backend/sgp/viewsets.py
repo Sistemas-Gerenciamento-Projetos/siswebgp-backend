@@ -204,6 +204,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return JsonResponse({'message': 'Não há projetos cadastrados.'})
         else:
             return self.queryset
+
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    def get_tasks_without_epic(self, request, pk=None):
+        if pk is None:
+            return JsonResponse({'message': 'Campo project_id inválido'}, status=400)
+
+        print(pk)
+
+        project = Project.objects.get(pk=pk)
+        tasks_without_epic = Task.objects.filter(project=pk, epic=None)
+
+        if not tasks_without_epic.exists(): 
+            return JsonResponse([], status=200, safe=False)
+        else:
+            serializer = TaskSerializer(tasks_without_epic, many=True)
+            return JsonResponse(serializer.data, safe=False)
     
 class TaskViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
