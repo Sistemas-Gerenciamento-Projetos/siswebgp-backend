@@ -210,8 +210,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if pk is None:
             return JsonResponse({'message': 'Campo project_id inválido'}, status=400)
 
-        print(pk)
-
         project = Project.objects.get(pk=pk)
         tasks_without_epic = Task.objects.filter(project=pk, epic=None)
 
@@ -352,3 +350,19 @@ class EpicViewSet(viewsets.ModelViewSet):
 
         self.perform_destroy(epic)
         return JsonResponse({'message': 'Épico deletado com sucesso.'}, status=200)
+
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    def get_epic_tasks(self, request, project__pk=None, pk=None):
+        if project__pk is None:
+            return JsonResponse({'message': 'Campo project_id inválido'}, status=400)
+
+        if pk is None:
+            return JsonResponse({'message': 'Campo epic_id inválido'}, status=400)
+
+        epic_tasks = Task.objects.filter(project=project__pk, epic=pk)
+
+        if not epic_tasks.exists(): 
+            return JsonResponse([], status=200, safe=False)
+        else:
+            serializer = TaskSerializer(epic_tasks, many=True)
+            return JsonResponse(serializer.data, safe=False)
