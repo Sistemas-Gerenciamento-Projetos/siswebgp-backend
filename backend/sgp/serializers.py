@@ -20,7 +20,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 class EpicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Epic
-        fields = ('id', 'title', 'description', 'number', 'creation_date', 'deadline_date', 'status', 'project')
+        fields = ('id', 'title', 'description', 'number', 'creation_date', 'deadline_date', 'status', 'project', 'user', 'start_date') 
 
 class InviteSerializer(serializers.ModelSerializer):
     class Meta:
