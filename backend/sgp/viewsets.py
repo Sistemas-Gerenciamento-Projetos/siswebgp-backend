@@ -124,9 +124,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
             serializer = ProjectSerializer(projects, many=True)
 
             for project in serializer.data:
+                tasks_completeds = Task.objects.filter(project=project['id'], status='DONE').count()
+                epics_completeds = Epic.objects.filter(project=project['id'], status='DONE').count()
+
+                tasks_count = Task.objects.filter(project=project['id']).count()
+                epics_count = Epic.objects.filter(project=project['id']).count()
+
                 project['manager_name'] = User.objects.get(pk=project['manager']).name
-                project['num_completed_tasks'] = Task.objects.filter(project=project['id'], status='DONE').count()
-                project['num_total_tasks'] = Task.objects.filter(project=project['id']).count()
+                project['num_completed_tasks'] = tasks_completeds + epics_completeds
+                project['num_total_tasks'] = tasks_count + epics_count
 
             return JsonResponse(serializer.data, safe=False)
         except user is None:
@@ -239,9 +245,10 @@ class TaskViewSet(viewsets.ModelViewSet):
             serializer = TaskSerializer(queryset, many=True)
             for task in serializer.data:
                 task['user_name'] = User.objects.get(pk=task['user']).name
+                task['is_epic'] = False
                 epic_id = task['epic']
                 if epic_id is not None:
-                    task['epic'] = Epic.objects.get(pk=epic_id).number
+                    task['epic_number'] = Epic.objects.get(pk=epic_id).number
             return JsonResponse(serializer.data, safe=False)
 
     def retrieve(self, request, project__pk=None, pk=None):
@@ -308,7 +315,7 @@ class EpicViewSet(viewsets.ModelViewSet):
 
         for epic in serializer.data:
                 epic['user_name'] = User.objects.get(pk=epic['user']).name
-                epic['epic'] = 1
+                epic['is_epic'] = True
 
         return JsonResponse(serializer.data, safe=False)
 
