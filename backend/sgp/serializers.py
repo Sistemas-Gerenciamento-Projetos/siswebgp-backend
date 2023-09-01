@@ -26,3 +26,11 @@ class InviteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invite
         fields = ('id', 'project', 'user_invited', 'inviter', 'creation_date', 'expiration_date', 'accepted')
+
+class AnalyticsSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    data = serializers.IntegerField()
+    title = serializers.CharField(max_length=100)
+
+    def create(self, validated_data):
+        return Analytics(id=uuid.uuid4, **validated_data)

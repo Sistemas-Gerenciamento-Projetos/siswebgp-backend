@@ -92,3 +92,8 @@ class Invite(models.Model):
     
     def _str_(self):
          return f'{self.project} - {self.user} - {self.status}'
+
+class Analytics(object):
+    def __init__(self, **kwargs):
+        for field in ('id', 'data', 'title'):
+            setattr(self, field, kwargs.get(field, None))

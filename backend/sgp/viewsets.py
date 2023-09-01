@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from datetime import datetime
 from django.db.models.query_utils import Q
 import logging
+import json
 logger = logging.getLogger('sgp_api')
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -375,3 +376,57 @@ class EpicViewSet(viewsets.ModelViewSet):
         else:
             serializer = TaskSerializer(epic_tasks, many=True)
             return JsonResponse(serializer.data, safe=False)
+
+class AnalyticsViewSet(viewsets.ViewSet):
+    http_method_names = ['get']
+    serializer_class = EpicSerializer
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, project__pk=None):
+        if project__pk is None:
+            return JsonResponse({'message': 'Campo project_id inválido'}, status=400)
+
+        tasks_count = Task.objects.filter(project=project__pk).count()
+        tasks_completeds = Task.objects.filter(project=project__pk, status='DONE').count()
+        tasks_todo = Task.objects.filter(project=project__pk, status='TODO').count()
+        tasks_inprogress = Task.objects.filter(project=project__pk, status='INPROGRESS').count()
+        tasks_paused = Task.objects.filter(project=project__pk, status='PAUSED').count()
+        
+        epics_count = Epic.objects.filter(project=project__pk).count()
+        epics_completeds = Epic.objects.filter(project=project__pk, status='DONE').count()
+        epics_todo = Epic.objects.filter(project=project__pk, status='TODO').count()
+        epics_inprogress = Epic.objects.filter(project=project__pk, status='INPROGRESS').count()
+        epics_paused = Epic.objects.filter(project=project__pk, status='PAUSED').count()
+
+        cards_completeds = tasks_completeds + epics_completeds
+        cards_todo = tasks_todo + epics_todo
+        cards_inprogress = tasks_inprogress + epics_inprogress
+        cards_paused = tasks_paused + epics_paused
+        cards_not_done = cards_todo + cards_inprogress + cards_paused
+
+        total_cards = tasks_count + epics_count
+        project_progress = 0.0
+        if epics_completeds + tasks_completeds > 0:
+            project_progress = (tasks_completeds + epics_completeds) / (tasks_count + epics_count)
+            project_progress *= 100
+
+        print(project_progress)
+
+        analytics_dict = []
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Cards criados', 'data': total_cards})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Épicos concluídos', 'data': epics_completeds})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Tarefas concluídas', 'data': tasks_completeds})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Progresso', 'data': project_progress})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Em andamento',  'data': cards_not_done})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Concluídos',  'data': cards_completeds})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Concluído',  'data': cards_completeds})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Em andamento',  'data': cards_inprogress})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Pausado',  'data': cards_paused})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'A fazer',  'data': cards_todo})
+
+        serializer = AnalyticsSerializer(data=analytics_dict, many=True)
+
+        if not serializer.is_valid():
+            JsonResponse({'message': 'Dados inválidos'}, status=400)
+
+        return JsonResponse(serializer.data, safe=False)
