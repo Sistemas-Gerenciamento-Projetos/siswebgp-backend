@@ -131,7 +131,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 tasks_count = Task.objects.filter(project=project['id']).count()
                 epics_count = Epic.objects.filter(project=project['id']).count()
 
-                project['manager_name'] = User.objects.get(pk=project['manager']).name
+                manager = User.objects.get(pk=project['manager'])
+                project['manager_name'] = manager.name
+                project['manager_email'] = manager.email
                 project['num_completed_tasks'] = tasks_completeds + epics_completeds
                 project['num_total_tasks'] = tasks_count + epics_count
 
@@ -409,8 +411,6 @@ class AnalyticsViewSet(viewsets.ViewSet):
         if epics_completeds + tasks_completeds > 0:
             project_progress = (tasks_completeds + epics_completeds) / (tasks_count + epics_count)
             project_progress *= 100
-
-        print(project_progress)
 
         analytics_dict = []
         analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Cards criados', 'data': total_cards})
