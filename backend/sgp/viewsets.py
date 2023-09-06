@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from datetime import datetime
 from django.db.models.query_utils import Q
 import logging
+import json
 logger = logging.getLogger('sgp_api')
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -102,6 +103,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return JsonResponse({'message': 'A data de término não pode ser anterior à data de início.'}, status=400)
 
         data['project'] = self.kwargs['pk']
+        project_tasks = Task.objects.filter(project=data['project'])
+        if not project_tasks:
+            data['number'] = 0
+        else:
+            greatest_number = project_tasks.order_by("-number")[0].number
+            data['number'] = greatest_number + 1
 
         serializer = TaskSerializer(data=data)
         if serializer.is_valid():
@@ -118,9 +125,17 @@ class ProjectViewSet(viewsets.ModelViewSet):
             serializer = ProjectSerializer(projects, many=True)
 
             for project in serializer.data:
-                project['manager_name'] = User.objects.get(pk=project['manager']).name
-                project['num_completed_tasks'] = Task.objects.filter(project=project['id'], status='DONE').count()
-                project['num_total_tasks'] = Task.objects.filter(project=project['id']).count()
+                tasks_completeds = Task.objects.filter(project=project['id'], status='DONE').count()
+                epics_completeds = Epic.objects.filter(project=project['id'], status='DONE').count()
+
+                tasks_count = Task.objects.filter(project=project['id']).count()
+                epics_count = Epic.objects.filter(project=project['id']).count()
+
+                manager = User.objects.get(pk=project['manager'])
+                project['manager_name'] = manager.name
+                project['manager_email'] = manager.email
+                project['num_completed_tasks'] = tasks_completeds + epics_completeds
+                project['num_total_tasks'] = tasks_count + epics_count
 
             return JsonResponse(serializer.data, safe=False)
         except user is None:
@@ -137,8 +152,24 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 del user['email']
                 del user['role']
             return JsonResponse(serializer.data, safe=False)
-        except project.DoesNotExist:
+        except Project.DoesNotExist:
             return JsonResponse({'message': 'Projeto não encontrado.'}, status=404)
+
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    def external_users(self, request, pk=None):
+        try:
+            project = Project.objects.get(pk=self.kwargs['pk'])
+
+            if project is None:
+                return JsonResponse({'message': 'Projeto não encontrado.'}, status=404)
+            if request.user not in project.users.all():
+                return JsonResponse({'message': 'Você não tem permissão para acessar este projeto.'}, status=403)
+            
+            users_not_in_project = User.objects.difference(project.users.all())
+            serializer = UserSerializer(users_not_in_project, many=True)
+            return JsonResponse(serializer.data, safe=False)
+        except Project.DoesNotExist:
+            return JsonResponse({'message': f'Projeto com id {self.kwargs["pk"]} não encontrado.'}, status=404)
         
     
     @action(detail=True, methods=['GET', 'POST'], permission_classes=[IsAuthenticated])
@@ -182,6 +213,20 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return JsonResponse({'message': 'Não há projetos cadastrados.'})
         else:
             return self.queryset
+
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    def get_tasks_without_epic(self, request, pk=None):
+        if pk is None:
+            return JsonResponse({'message': 'Campo project_id inválido'}, status=400)
+
+        project = Project.objects.get(pk=pk)
+        tasks_without_epic = Task.objects.filter(project=pk, epic=None)
+
+        if not tasks_without_epic.exists(): 
+            return JsonResponse([], status=200, safe=False)
+        else:
+            serializer = TaskSerializer(tasks_without_epic, many=True)
+            return JsonResponse(serializer.data, safe=False)
     
 class TaskViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
@@ -203,6 +248,10 @@ class TaskViewSet(viewsets.ModelViewSet):
             serializer = TaskSerializer(queryset, many=True)
             for task in serializer.data:
                 task['user_name'] = User.objects.get(pk=task['user']).name
+                task['is_epic'] = False
+                epic_id = task['epic']
+                if epic_id is not None:
+                    task['epic_number'] = Epic.objects.get(pk=epic_id).number
             return JsonResponse(serializer.data, safe=False)
 
     def retrieve(self, request, project__pk=None, pk=None):
@@ -250,3 +299,134 @@ class InviteViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post']
     serializer_class = InviteSerializer
     permission_classes = [IsAuthenticated]
+
+class EpicViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete']
+    serializer_class = EpicSerializer
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, project__pk=None):
+        if project__pk is None:
+            return JsonResponse({'message': 'Campo project_id inválido'}, status=400)
+
+        queryset = Epic.objects.filter(project=project__pk)
+
+        if not queryset.exists():
+            return JsonResponse([], status=200, safe=False)
+        
+        serializer = EpicSerializer(queryset, many=True)
+
+        for epic in serializer.data:
+                epic['user_name'] = User.objects.get(pk=epic['user']).name
+                epic['is_epic'] = True
+
+        return JsonResponse(serializer.data, safe=False)
+
+    def create(self, request, project__pk=None):
+        data = request.data
+
+        project_epics = Epic.objects.filter(project=project__pk)
+
+        if not project_epics:
+            data['number'] = 0
+        else:
+            greatest_number = project_epics.order_by("-number")[0].number
+            data['number'] = greatest_number + 1
+
+        serializer = EpicSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201)
+        else:
+            return JsonResponse(serializer.errors, status=400)
+
+    def partial_update(self, request, project__pk=None, *args, **kwargs):
+        kwargs['partial'] = True
+        project = Project.objects.get(pk=project__pk)
+        project_epics = Epic.objects.filter(project=project__pk)
+        epic = project_epics.get(pk=kwargs['pk'])
+
+        serializer = self.get_serializer(epic, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return JsonResponse(serializer.data)
+
+    def destroy(self, request, project__pk=None, *args, **kwargs):
+        project = Project.objects.get(pk=project__pk)
+        project_epics = Epic.objects.filter(project=project__pk)
+
+        epic = project_epics.get(pk=kwargs['pk'])
+        if request.user.id != project.manager.id:
+            return JsonResponse({'message': 'Você não tem permissão para deletar este épico.'}, status=403)
+
+        self.perform_destroy(epic)
+        return JsonResponse({'message': 'Épico deletado com sucesso.'}, status=200)
+
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    def get_epic_tasks(self, request, project__pk=None, pk=None):
+        if project__pk is None:
+            return JsonResponse({'message': 'Campo project_id inválido'}, status=400)
+
+        if pk is None:
+            return JsonResponse({'message': 'Campo epic_id inválido'}, status=400)
+
+        epic_tasks = Task.objects.filter(project=project__pk, epic=pk)
+
+        if not epic_tasks.exists(): 
+            return JsonResponse([], status=200, safe=False)
+        else:
+            serializer = TaskSerializer(epic_tasks, many=True)
+            return JsonResponse(serializer.data, safe=False)
+
+class AnalyticsViewSet(viewsets.ViewSet):
+    http_method_names = ['get']
+    serializer_class = EpicSerializer
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, project__pk=None):
+        if project__pk is None:
+            return JsonResponse({'message': 'Campo project_id inválido'}, status=400)
+
+        tasks_count = Task.objects.filter(project=project__pk).count()
+        tasks_completeds = Task.objects.filter(project=project__pk, status='DONE').count()
+        tasks_todo = Task.objects.filter(project=project__pk, status='TODO').count()
+        tasks_inprogress = Task.objects.filter(project=project__pk, status='INPROGRESS').count()
+        tasks_paused = Task.objects.filter(project=project__pk, status='PAUSED').count()
+        
+        epics_count = Epic.objects.filter(project=project__pk).count()
+        epics_completeds = Epic.objects.filter(project=project__pk, status='DONE').count()
+        epics_todo = Epic.objects.filter(project=project__pk, status='TODO').count()
+        epics_inprogress = Epic.objects.filter(project=project__pk, status='INPROGRESS').count()
+        epics_paused = Epic.objects.filter(project=project__pk, status='PAUSED').count()
+
+        cards_completeds = tasks_completeds + epics_completeds
+        cards_todo = tasks_todo + epics_todo
+        cards_inprogress = tasks_inprogress + epics_inprogress
+        cards_paused = tasks_paused + epics_paused
+        cards_not_done = cards_todo + cards_inprogress + cards_paused
+
+        total_cards = tasks_count + epics_count
+        project_progress = 0.0
+        if epics_completeds + tasks_completeds > 0:
+            project_progress = (tasks_completeds + epics_completeds) / (tasks_count + epics_count)
+            project_progress *= 100
+
+        analytics_dict = []
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Cards criados', 'data': total_cards})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Épicos concluídos', 'data': epics_completeds})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Tarefas concluídas', 'data': tasks_completeds})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Progresso', 'data': project_progress})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Em andamento',  'data': cards_not_done})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Concluídos',  'data': cards_completeds})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Concluído',  'data': cards_completeds})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Em andamento',  'data': cards_inprogress})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'Pausado',  'data': cards_paused})
+        analytics_dict.append({'id': str(uuid.uuid4()), 'title': 'A fazer',  'data': cards_todo})
+
+        serializer = AnalyticsSerializer(data=analytics_dict, many=True)
+
+        if not serializer.is_valid():
+            JsonResponse({'message': 'Dados inválidos'}, status=400)
+
+        return JsonResponse(serializer.data, safe=False)
