@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-$-1$@bew5+9xvlbbp2iqk3izptq5rmp^m7*+qukil&k*nak^2$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -53,12 +53,12 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'console': { # Log to console
+        'console': {  # Log to console
             'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
-        'sgp_api': { # Logger for sgp_api app
+        'sgp_api': {  # Logger for sgp_api app
             'handlers': ['console'],
             'level': 'DEBUG',
         },
@@ -114,26 +114,26 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# WSGI_APPLICATION = 'railway_django.wsgi.application'
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'railway',
-#         'USER': 'postgres',
-#         'PASSWORD': 'VYVN0ECqFjXALMCFTfXC',
-#         'HOST': 'containers-us-west-35.railway.app',
-#         'PORT': '6029',
-#     }
-# }
-
+WSGI_APPLICATION = 'railway_django.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'railway',
+        'USER': 'postgres',
+        'PASSWORD': 'JWkZikgYqrEilwKYxBdY',
+        'HOST': 'containers-us-west-33.railway.app',
+        'PORT': '7832',
     }
 }
+
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 AUTH_USER_MODEL = 'sgp.User'
 
@@ -161,7 +161,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
