@@ -4,7 +4,6 @@ django-cors-headers==3.14.0
 django-rest-framework-nested==0.0.1
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.2.2
-psycopg2==2.9.7
 psycopg2-binary==2.9.7
 PyJWT==2.6.0
 pytz==2023.3
