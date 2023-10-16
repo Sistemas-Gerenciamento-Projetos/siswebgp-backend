@@ -116,23 +116,23 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#    }
-#}
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'btaj0ck5uvg6jhkd6quh',
-        'USER': 'uqcsrbfjmrzs4lrexl8m',
-        'PASSWORD': 'fPuF4lcUTbg6mr87Nxq9',
-        'HOST': 'btaj0ck5uvg6jhkd6quh-postgresql.services.clever-cloud.com',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+#DATABASES = {
+#    'default': {
+##        'ENGINE': 'django.db.backends.postgresql',
+ #       'NAME': 'btaj0ck5uvg6jhkd6quh',
+ #       'USER': 'uqcsrbfjmrzs4lrexl8m',
+ #       'PASSWORD': 'fPuF4lcUTbg6mr87Nxq9',
+ #       'HOST': 'btaj0ck5uvg6jhkd6quh-postgresql.services.clever-cloud.com',
+ #       'PORT': '5432',
+ #   }
+#}
 
 AUTH_USER_MODEL = 'sgp.User'
 
