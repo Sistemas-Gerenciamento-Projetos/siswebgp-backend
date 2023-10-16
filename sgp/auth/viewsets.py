@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from sgp.auth.serializers import LoginSerializer, RegistrationSerializer
+from sgp.models import *
 
 class LoginViewSet(ModelViewSet, TokenObtainPairView):
     serializer_class = LoginSerializer
@@ -29,6 +30,11 @@ class RegistrationViewSet(ModelViewSet, TokenObtainPairView):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
+        
+        if User.objects.filter(email = request.data['email']).exists():
+            return Response({
+                'reason': 'Email já cadastrado.'
+            }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
