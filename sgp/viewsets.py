@@ -9,6 +9,7 @@ from datetime import datetime
 from django.db.models.query_utils import Q
 import logging
 import json
+from sgp.email_dispatcher import *
 logger = logging.getLogger('sgp_api')
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -273,6 +274,9 @@ class TaskViewSet(viewsets.ModelViewSet):
         project = Project.objects.get(pk=project__pk)
         project_tasks = Task.objects.filter(project=project__pk)
         task = project_tasks.get(pk=kwargs['pk'])
+
+        if request.data.get('status') == 'DONE':
+            send_task_conclusion_email(project.project_name, task.number, f'http://localhost:3000/projects/{project.id}/backlog/{task.id}/edit/', project.manager)
 
         if request.data.get('project') is not None:
             return JsonResponse({'message': 'Você não pode alterar o projeto desta tarefa.'}, status=403)
