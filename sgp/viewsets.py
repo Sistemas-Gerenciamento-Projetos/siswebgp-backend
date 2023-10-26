@@ -275,7 +275,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         project_tasks = Task.objects.filter(project=project__pk)
         task = project_tasks.get(pk=kwargs['pk'])
 
-        if request.data.get('status') == 'DONE':
+        if task.status != 'DONE' and request.data.get('status') == 'DONE':
             send_task_conclusion_email(project.project_name, task.number, f'http://localhost:3000/projects/{project.id}/backlog/{task.id}/edit/', project.manager)
 
         if request.data.get('project') is not None:
