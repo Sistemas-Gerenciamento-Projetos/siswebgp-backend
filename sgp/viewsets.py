@@ -10,6 +10,7 @@ from django.db.models.query_utils import Q
 import logging
 import json
 from sgp.email_dispatcher import *
+from django.conf import settings
 logger = logging.getLogger('sgp_api')
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -276,7 +277,12 @@ class TaskViewSet(viewsets.ModelViewSet):
         task = project_tasks.get(pk=kwargs['pk'])
 
         if task.status != 'DONE' and request.data.get('status') == 'DONE':
-            send_task_conclusion_email(project.project_name, task.number, f'http://localhost:3000/projects/{project.id}/backlog/{task.id}/edit/', project.manager)
+            base_url = ''
+            if settings.PRODUCTION_MODE:
+                base_url = 'https://siswebgp-frontend.vercel.app/'
+            else:
+                base_url = 'http://localhost:3000/'
+            send_task_conclusion_email(project.project_name, task.number, f'{base_url}projects/{project.id}/backlog/{task.id}/edit/', project.manager)
 
         if request.data.get('project') is not None:
             return JsonResponse({'message': 'Você não pode alterar o projeto desta tarefa.'}, status=403)

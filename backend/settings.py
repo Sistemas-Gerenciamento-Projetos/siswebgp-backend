@@ -187,3 +187,5 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'sistema.gerencia.projetos@gmail.com'
 EMAIL_HOST_PASSWORD = 'kgax mbdr lusm czsa'
 RECIPIENT_ADDRESS = 'albertooliveirasantos@gmail.com'
+
+PRODUCTION_MODE = 1
