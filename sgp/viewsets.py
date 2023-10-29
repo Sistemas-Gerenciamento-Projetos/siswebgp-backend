@@ -276,13 +276,16 @@ class TaskViewSet(viewsets.ModelViewSet):
         project_tasks = Task.objects.filter(project=project__pk)
         task = project_tasks.get(pk=kwargs['pk'])
 
+        base_url = ''
+        if settings.PRODUCTION_MODE:
+            base_url = 'https://siswebgp-frontend.vercel.app/'
+        else:
+            base_url = 'http://localhost:3000/'
+
         if task.status != 'DONE' and request.data.get('status') == 'DONE':
-            base_url = ''
-            if settings.PRODUCTION_MODE:
-                base_url = 'https://siswebgp-frontend.vercel.app/'
-            else:
-                base_url = 'http://localhost:3000/'
             send_task_conclusion_email(project.project_name, task.number, f'{base_url}projects/{project.id}/backlog/{task.id}/edit/', project.manager)
+        else:
+            send_task_update_email(project.project_name, task.number, f'{base_url}projects/{project.id}/backlog/{task.id}/edit/', project.manager)
 
         if request.data.get('project') is not None:
             return JsonResponse({'message': 'Você não pode alterar o projeto desta tarefa.'}, status=403)
