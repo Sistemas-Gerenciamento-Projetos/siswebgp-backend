@@ -349,6 +349,13 @@ class EpicViewSet(viewsets.ModelViewSet):
         serializer = EpicSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
+
+            if data['taskId'] is not None:
+                task = Task.objects.get(pk=data['taskId'])
+                epic = Epic.objects.get(pk=serializer.data['id'])
+                task.epic = epic
+                task.save()
+
             return JsonResponse(serializer.data, status=201)
         else:
             return JsonResponse(serializer.errors, status=400)
