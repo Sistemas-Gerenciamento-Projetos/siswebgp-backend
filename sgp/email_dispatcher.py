@@ -3,7 +3,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.conf import settings
 
-activate_send_email = 0
+activate_send_email = 1
 
 def send_task_conclusion_email(project_name, id_task, task_link, manager_email):
     if activate_send_email:
