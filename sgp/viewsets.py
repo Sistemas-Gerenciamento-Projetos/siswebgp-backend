@@ -9,6 +9,8 @@ from datetime import datetime
 from django.db.models.query_utils import Q
 import logging
 import json
+from sgp.email_dispatcher import *
+from django.conf import settings
 logger = logging.getLogger('sgp_api')
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -274,6 +276,17 @@ class TaskViewSet(viewsets.ModelViewSet):
         project_tasks = Task.objects.filter(project=project__pk)
         task = project_tasks.get(pk=kwargs['pk'])
 
+        base_url = ''
+        if settings.PRODUCTION_MODE:
+            base_url = 'https://siswebgp-frontend.vercel.app/'
+        else:
+            base_url = 'http://localhost:3000/'
+
+        if task.status != 'DONE' and request.data.get('status') == 'DONE':
+            send_task_conclusion_email(project.project_name, task.number, f'{base_url}projects/{project.id}/backlog/{task.id}/edit/', project.manager)
+        else:
+            send_task_update_email(project.project_name, task.number, f'{base_url}projects/{project.id}/backlog/{task.id}/edit/', project.manager)
+
         if request.data.get('project') is not None:
             return JsonResponse({'message': 'Você não pode alterar o projeto desta tarefa.'}, status=403)
         if request.data.get("status") is not None and (request.user.id != project.manager.id and request.user.id != task.user.id):
@@ -336,6 +349,13 @@ class EpicViewSet(viewsets.ModelViewSet):
         serializer = EpicSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
+
+            if data['taskId'] is not None:
+                task = Task.objects.get(pk=data['taskId'])
+                epic = Epic.objects.get(pk=serializer.data['id'])
+                task.epic = epic
+                task.save()
+
             return JsonResponse(serializer.data, status=201)
         else:
             return JsonResponse(serializer.errors, status=400)

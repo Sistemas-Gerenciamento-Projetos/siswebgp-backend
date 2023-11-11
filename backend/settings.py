@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-$-1$@bew5+9xvlbbp2iqk3izptq5rmp^m7*+qukil&k*nak^2$'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['.vercel.app', '.now.sh', '127.0.0.1', 'localhost']
 
@@ -178,3 +178,14 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'sistema.gerencia.projetos@gmail.com'
+EMAIL_HOST_PASSWORD = 'kgax mbdr lusm czsa'
+RECIPIENT_ADDRESS = 'albertooliveirasantos@gmail.com'
+
+PRODUCTION_MODE = 1
