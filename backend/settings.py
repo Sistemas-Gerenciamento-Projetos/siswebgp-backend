@@ -126,11 +126,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'btaj0ck5uvg6jhkd6quh',
+        'NAME': 'bomvqzwmoilyg6l1jjgq',
         'USER': 'uqcsrbfjmrzs4lrexl8m',
         'PASSWORD': 'fPuF4lcUTbg6mr87Nxq9',
-        'HOST': 'btaj0ck5uvg6jhkd6quh-postgresql.services.clever-cloud.com',
-        'PORT': '5432',
+        'HOST': 'bomvqzwmoilyg6l1jjgq-postgresql.services.clever-cloud.com',
+        'PORT': '50013',
     }
 }
 
